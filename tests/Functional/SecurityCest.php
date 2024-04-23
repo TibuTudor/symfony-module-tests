@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
+use App\Controller\SomeCustomController;
 use App\Entity\User;
 use App\Tests\Support\FunctionalTester;
+use Codeception\Lib\ModuleContainer;
+use Symfony\Component\HttpFoundation\Request;
 
 final class SecurityCest
 {
@@ -26,15 +29,20 @@ final class SecurityCest
         $I->dontSeeRememberedAuthentication();
     }
 
-    public function seeAuthentication(FunctionalTester $I)
+    public function seeAuthentication(FunctionalTester $I, ModuleContainer $moduleContainer)
     {
         $user = $I->grabEntityFromRepository(User::class, [
             'email' => 'john_doe@gmail.com'
         ]);
         $I->amLoggedInAs($user);
         $I->amOnPage('/dashboard');
-
         $I->seeAuthentication();
+
+        $request = new Request();
+        $em = $moduleContainer->getModule('Doctrine')->_getEntityManager();
+
+        $controller = $I->grabService(SomeCustomController::class);
+        $controller->testAddForm($em, $request);
     }
 
     public function seeRememberedAuthentication(FunctionalTester $I)
